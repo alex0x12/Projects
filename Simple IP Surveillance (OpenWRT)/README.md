@@ -1,5 +1,5 @@
-# Project: OpenWRT based IP surveillance
-- This projects shows how to make simple IP surveillance using OpenWrt or potentially any linux-driven device.
+# Project: OpenWrt based IP surveillance
+- This project shows how to make simple IP surveillance using OpenWrt or potentially any linux-driven device.
 ## Prerequisites
 - OpenWrt-compatible router with USB port. (Check: [Table of hardware](https://openwrt.org/toh "OpenWrt - Hardware")) 
 - Any IP camera with H.264/H.265 and RTSP/HTTP stream support.
