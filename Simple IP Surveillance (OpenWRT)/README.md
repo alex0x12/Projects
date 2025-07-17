@@ -14,7 +14,7 @@ You may obtain OpenWrt SDK which contains precompiled toolchain etc. (Check: [Us
 Then do:
 ```console
 mkdir openwrt_sdk
-tar -xJvf openwrt-sdk-23.05.4-ramips-mt76x8_gcc-12.3.0_musl.Linux-x86_64.tar.xz -C openwrt_sdk
+tar -xJvf openwrt-sdk-{version}-{architecture}-{platform}.tar.xz -C openwrt_sdk
 cd openwrt_sdk/feeds/packages
 wget https://github.com/openwrt/packages/pull/9475.patch
 git am 9475.patch
