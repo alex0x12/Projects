@@ -33,7 +33,7 @@ It may require some tinkering as dependencies' download sources can be inaccessi
 Then you'll have to find specific package on other FTP server and change URLs in Makefile respectively.  
 **NOTE:** Compile with flag **V=sc** to view why the compilation fails.  
 
-After all your **.ipk** binary will be in **/bin/packages/{architecture}/packages**  
+After all your **.ipk** binary will be in ```/bin/packages/{architecture}/packages```  
 I have FFmpeg for TP-Link TL-WR842N(D) V.5 ([mipsel_24kc](https://openwrt.org/toh/hwdata/tp-link/tp-link_tl-wr842n_v5)) and leave it here for example.
 
 ## So, now you are able to capture RTSP/HTTP stream by router using FFmpeg.
