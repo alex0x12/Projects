@@ -9,7 +9,7 @@
 After flashing the router, you'll have to make extended root partition. (Check: [Extroot configuration](https://openwrt.org/docs/guide-user/additional-software/extroot_configuration "OpenWrt - Extroot"))  
 Next, the idea is to capture RTSP/HTTP stream from IP camera and store it.  
 FFmpeg could do that, but OpenWrt ffmpeg package doesn't provide H.264/H.265 codecs - so you'll have to compile it for your CPU.  
-You may obtain OpenWrt SDK which contains precompiled toolchain etc. (Check: [Using the SDK](https://openwrt.org/docs/guide-developer/toolchain/using_the_sdk "OpenWrt - SDK"))  
+You may obtain OpenWrt SDK which contains precompiled toolchain etc. (Check: [Using the SDK](https://openwrt.org/docs/guide-developer/toolchain/using_the_sdk "OpenWrt - SDK"))
 
 Then do:
 ```console
@@ -33,9 +33,11 @@ It may require some tinkering as dependencies' download sources can be inaccessi
 Then you'll have to find specific package on other FTP server and change URLs in Makefile respectively.  
 **NOTE:** Compile with flag **V=sc** to view why the compilation fails.  
 
-After all your **.ipk** binary will be in **/bin/packages/{architecture}/packages**
+After all your **.ipk** binary will be in **/bin/packages/{architecture}/packages**  
+I have FFmpeg for TP-Link TL-WR842N(D) V.5 ([mipsel_24kc](https://openwrt.org/toh/hwdata/tp-link/tp-link_tl-wr842n_v5)) and leave it here for example.
 
-### So, now you are able to capture RTSP/HTTP stream by router using FFmpeg. I suggest simple bash scripts to do the rest:
+## So, now you are able to capture RTSP/HTTP stream by router using FFmpeg.
+I suggest simple bash scripts to do the rest:
 ```console
   surv.sh:
   1 #!/bin/bash
