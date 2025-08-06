@@ -23,13 +23,13 @@ cd ..
 ./scripts/feeds update -i
 ./scripts/feeds install ffmpeg4
 ```
-You either choose desired FFmpeg settings yourself or just apply patch as shown.
+You either choose desired FFmpeg settings yourself or just apply a patch as shown above.
 Finally, compile it: 
 ```console
 make package/feeds/packages/ffmpeg4/download
 make -j$(nproc) package/feeds/packages/ffmpeg4/compile  V=sc
 ```
-It may require some tinkering as dependencies' download sources can be inaccessible at the moment.  
+It may require some tinkering as dependencies' sources can be inaccessible at the moment.  
 Then you'll have to find specific package on other FTP server and change URLs in Makefile respectively.  
 **NOTE:** Compile with flag **V=sc** to view why the compilation fails.  
 
@@ -75,7 +75,7 @@ I suggest simple bash scripts to do the rest:
  33     record_cycle
  34 done
 ```
-The script above creates distinct directory for each day where FFmpeg makes 30 min video fragments.
+The script above creates distinct directory for each day where FFmpeg makes 30min video fragments.
 **NOTE:** It's highly recommended to launch through the following script:
 ```console
   launch.sh:
@@ -91,5 +91,5 @@ The script above creates distinct directory for each day where FFmpeg makes 30 m
  10 exit 0
 ```
 
-## Dependencies:
+## Script Dependencies:
 - bash coreutils-date ffmpeg
