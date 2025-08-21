@@ -1,6 +1,6 @@
 # Project: Diary
 - It is a diary you may use to store your notes etc.
-- The diary stores data in sqlite db and supports XOR as the simpliest way for private use.
+- The diary stores data in sqlite db and supports XOR as the simplest way for private use.
 - The project is written in Python. Its UI is made with PyQt5 framework.
 - Users are able to either load/save their notes in .txt or export it in pdf
 
