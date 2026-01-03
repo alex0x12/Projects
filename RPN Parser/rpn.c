@@ -33,7 +33,7 @@ static void rpn_parse(const Token* token, status_t status)
     printf("%d - Token: %s\n",calls,token->sym);
     calls++;
   }
-  */
+  */ 
   static char* rs=NULL;
   static Stack* st=NULL;
   if(status==HALT)
@@ -69,6 +69,7 @@ static void rpn_parse(const Token* token, status_t status)
     case LPAREN:
       push(&st,token);
       break;
+    case FLOATOP:
     case BINOP:
     {
       while(get_size(&st) && !check_priority(top(&st),token))
@@ -111,8 +112,8 @@ static void tokenize(const char* const arg, token_cb callback)
   if(!len) return;
   size_t i=0;
   const Token* token=NULL;
+  int prev_priority = 0;
   token_t prev_type=UNDEF;
-  bool floating_op=false; // <-- to divide +- and %! handling (SUCKS)
   while(i<len)
   {
     if(isdigit(arg[i])) 
@@ -136,7 +137,8 @@ static void tokenize(const char* const arg, token_cb callback)
       }
       buffer[j]=0;
       
-      prev_type=NUMBER; 
+      prev_type=NUMBER;
+      prev_priority=0;
       Token* tmp=create_token(buffer,NUMBER,NONE,0);
       callback(tmp,ACTIVE);
       destroy_token(tmp);
@@ -154,6 +156,7 @@ static void tokenize(const char* const arg, token_cb callback)
       if(token)
       {
         prev_type=token->type;
+        prev_priority=token->priority;
         callback(token,ACTIVE);
       }
       continue;
@@ -167,7 +170,7 @@ static void tokenize(const char* const arg, token_cb callback)
       continue;
     }
 
-    if(!strcmp(token->sym,"+") || !strcmp(token->sym,"-"))
+    if(token->type==FLOATOP)
     {
       token_t cur_type=UNDEF;
       if(!prev_type)
@@ -178,13 +181,15 @@ static void tokenize(const char* const arg, token_cb callback)
       {
         switch(prev_type)
         {
-          case UNAOP:
-            cur_type=floating_op?UNAOP:BINOP;
-            break;
           case LPAREN:
           case BINOP:
           case DELIM:
-            cur_type=UNAOP;
+          case FLOATOP:
+          case UNAOP:
+            if(prev_priority==4)
+              cur_type=BINOP;
+            else
+              cur_type=UNAOP;
             break;
           default:
             cur_type=BINOP;
@@ -197,14 +202,15 @@ static void tokenize(const char* const arg, token_cb callback)
         {
           const Token* uminus = find_token("~");
           callback(uminus,ACTIVE);
+          prev_priority=uminus->priority;
         }
         prev_type=cur_type;
         i++;
         continue;
       }
     }
-   
-    floating_op=(!strcmp(token->sym,"-")) || (!strcmp(token->sym,"+"));
+    
+    prev_priority=token->priority;
     prev_type=token->type;
     callback(token,ACTIVE);
     i++;

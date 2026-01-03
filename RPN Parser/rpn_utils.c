@@ -28,15 +28,16 @@ static Token _opset[] =
   {"(",LPAREN,NONE,0},
   {")",RPAREN,NONE,0},
   
-  {"+",BINOP,LEFT,1},
-  {"-",BINOP,LEFT,1},
+  {"+",FLOATOP,LEFT,1},
+  {"-",FLOATOP,LEFT,1},
+  
   {"*",BINOP,LEFT,2},
   {"/",BINOP,LEFT,2},
   {"^",BINOP,RIGHT,3},
   
   {"%",UNAOP,RIGHT,4},
   {"!",UNAOP,RIGHT,4},
-  {"~",UNAOP,RIGHT,4}
+  {"~",UNAOP,RIGHT,5}
 };
 
 static const size_t _opset_size = sizeof(_opset)/sizeof(_opset[0]);

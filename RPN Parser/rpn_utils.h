@@ -8,6 +8,7 @@ typedef enum
   DELIM,
   BINOP,
   UNAOP,
+  FLOATOP,
   NUMBER,
   LPAREN,
   RPAREN
