@@ -1,4 +1,3 @@
-#include <complex.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -10,10 +9,7 @@
 
 #include "rpn_utils.h"
 
-
 static char format[16] = "%0.3f";
-
-
 static void set_format(const char* arg)
 {
   size_t fs=sizeof(format);
@@ -27,21 +23,10 @@ static void set_format(const char* arg)
   free(rs);
 }
 
-
 static double fact(double v)
 {
   if(v<=1) return 1;
   return v * fact(v-1);
-}
-
-static double min(double a, double b)
-{
-  return a>=b?b:a;
-}
-
-static double max(double a, double b)
-{
-  return a<=b?b:a;
 }
 
 static void rpn_count(const Token* token, status_t status)
@@ -169,11 +154,11 @@ static void rpn_count(const Token* token, status_t status)
       }
       else if(!strcmp(sym,"min"))
       {
-        rs=min(farg,sarg);
+        rs=fmin(farg,sarg);
       }
       else if(!strcmp(sym,"max"))
       {
-        rs=max(farg,sarg);
+        rs=fmax(farg,sarg);
       }
     }
   }
