@@ -11,7 +11,7 @@ As a result, we get a string that's ready to be counted.
 
 ## TODO
 - Preprocessing 
-- Calculation 
+- Tests
 
 ## Build options
 ```console
