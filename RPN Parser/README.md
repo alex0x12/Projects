@@ -7,7 +7,7 @@ The input must be grammatically correct as there is no preprocessing yet, but on
 As a result, we get a string that's ready to be counted.
 
 ## Example
-![work_example](res.png)
+![work_example](rs.png)
 
 ## TODO
 - Preprocessing 
