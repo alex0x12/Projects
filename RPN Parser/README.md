@@ -15,11 +15,12 @@ As a result, we get a string that's ready to be counted.
 
 ## Build options
 ```console
-CFLAGS="-Werror -Wall -Wextra"
-for item in $PWD/*.c; do
-  [ "$1" == "-f" ] && \
-  gcc -c $item || \
-  gcc -c $CFLAGS $item
-done
-gcc rpn.o rpn_utils.o -o rpn
+  CFLAGS_DEBUG="-Werror -Wall -Wextra -DDEBUG -g"
+  CFLAGS_RELEASE="-Werror -Wall -Wextra"
+  for item in $PWD/*.c; do
+    [ "$1" == "-release" ] && \
+    gcc -c $CFLAGS_RELEASE $item || \
+    gcc -c $CFLAGS_DEBUG $item
+  done
+  gcc rpn.o rpn_utils.o -lm -o rpn
 ```
