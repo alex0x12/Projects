@@ -18,10 +18,11 @@ As a result, we get a string that's ready to be counted.
 ```console
   CFLAGS_DEBUG="-Werror -Wall -Wextra -DDEBUG -g"
   CFLAGS_RELEASE="-Werror -Wall -Wextra"
+  [ "$1" == "-release" ] && \
+    CFLAGS=$CFLAGS_RELEASE || \
+    CFLAGS=$CFLAGS_DEBUG
   for item in $PWD/*.c; do
-    [ "$1" == "-release" ] && \
-    gcc -c $CFLAGS_RELEASE $item || \
-    gcc -c $CFLAGS_DEBUG $item
+    gcc -c $CFLAGS $item
   done
   gcc rpn.o rpn_utils.o -lm -o rpn
 ```
