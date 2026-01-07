@@ -1,10 +1,187 @@
+#include <complex.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
+
+#include <math.h>
 
 #include "rpn_utils.h"
+
+
+static char format[16] = "%0.3f";
+
+
+static void set_format(const char* arg)
+{
+  size_t fs=sizeof(format);
+  memset(format,0,fs);
+  
+  char *rs=NULL; 
+  str_construct(&rs,"%0.",arg,"f",NULL);
+  size_t len = strnlen(rs,fs-1);
+  strncpy(format,rs,len);
+  
+  free(rs);
+}
+
+
+static double fact(double v)
+{
+  if(v<=1) return 1;
+  return v * fact(v-1);
+}
+
+static double min(double a, double b)
+{
+  return a>=b?b:a;
+}
+
+static double max(double a, double b)
+{
+  return a<=b?b:a;
+}
+
+static void rpn_count(const Token* token, status_t status)
+{
+  static Stack *st=NULL;
+  
+  char* endptr=NULL;
+  if(status==HALT)
+  {
+    printf("Res: %s\n",top(&st)->sym);
+    destroy_stack(&st);
+    st=NULL;
+    return;
+  }
+  if(!token || !token->sym) return;
+  
+  token_t type = token->type;
+  char* sym = token->sym;
+  if(type==NUMBER)
+  {
+    push(&st,token);
+    return;
+  }
+  if (type==CONSTANT)
+  {
+    push(&st,token);
+    free(top(&st)->sym);
+    char buffer[64];
+    if(!strcmp(sym,"e"))
+    {
+      snprintf(buffer,64,format,M_E);
+    }
+    else if(!strcmp(sym,"p"))
+    {
+      snprintf(buffer,64,format,M_PI);
+    }
+    top(&st)->sym=strdup(buffer);
+    return;
+  }
+  //Token* ops = getops_by_type(type);
+  double rs;
+  if(type==UNAOP)
+  {
+    rs=strtod(top(&st)->sym,&endptr);
+    if(!strcmp(sym,"%"))
+      rs/=100.0;
+    else if(!strcmp(sym,"!"))
+      rs=fact(rs);
+    else if(!strcmp(sym,"~"))
+      rs=-1*rs;
+    else if(!strcmp(sym,"_%"))
+    {
+      double percent=strtod(top(&st)->sym,&endptr);
+      pop(&st);
+      double val=strtod(top(&st)->sym,&endptr);
+      
+      rs=(val/100.0)*percent;
+
+      char buffer[64]; 
+      snprintf(buffer,64,format,rs);
+      push_inplace(&st,buffer,NUMBER,NONE,0);
+      return;
+    }
+    else
+      return;
+  }
+  else if(type==BINOP||type==FLOATOP)
+  {
+    double lop,rop;
+    rop=strtod(top(&st)->sym,&endptr);
+    pop(&st);
+    lop=strtod(top(&st)->sym,&endptr);
+    if(!strcmp(sym,"+"))
+      rs=lop+rop;
+    else if(!strcmp(sym,"-"))
+      rs=lop-rop;
+    else if(!strcmp(sym,"*"))
+      rs=lop*rop;
+    else if(!strcmp(sym,"/"))
+      rs=lop/rop;
+    else if(!strcmp(sym,"^"))
+      rs=pow(lop,rop);
+    else 
+      return;
+  }
+  else if(type==FUNCTION)
+  {
+    double sarg, farg;
+    sarg=strtod(top(&st)->sym,&endptr);
+    if(!strcmp(sym,"ln"))
+    {
+      rs=log(sarg); 
+    }
+    else if(!strcmp(sym,"cos"))
+    {
+      rs=cos(sarg);
+    }
+    else if(!strcmp(sym,"sin"))
+    {
+      rs=sin(sarg);
+    }
+    else if(!strcmp(sym,"tan"))
+    {
+      rs=tan(sarg);
+    }
+    else if(!strcmp(sym,"cot"))
+    {
+      rs=cos(sarg)/sin(sarg);
+    }
+    else if(!strcmp(sym,"exp"))
+    {
+      rs=exp(sarg);
+    }
+    else if(!strcmp(sym,"sqrt"))
+    {
+      rs=sqrt(sarg);
+    }
+    else 
+    {
+      pop(&st);
+      farg=strtod(top(&st)->sym,&endptr);
+      if(!strcmp(sym,"log"))
+      {
+        rs=log(sarg)/log(farg);
+      }
+      else if(!strcmp(sym,"min"))
+      {
+        rs=min(farg,sarg);
+      }
+      else if(!strcmp(sym,"max"))
+      {
+        rs=max(farg,sarg);
+      }
+    }
+  }
+
+  char** t=&top(&st)->sym;
+  *t=realloc(*t,64);
+  snprintf(*t,64,format,rs);
+}
 
 static bool check_priority(const Token* st_top, const Token* token)
 {
@@ -40,26 +217,35 @@ static void rpn_parse(const Token* token, status_t status)
   {
     while(get_size(&st))
     {
+      rpn_count(top(&st),ACTIVE);
       str_append(&rs,top(&st)->sym);
       pop(&st);
     }
+    destroy_stack(&st);
     if(rs)
     {
-      puts(rs);
+      printf("RPN: %s\n",rs);
       free(rs);
     }
-    destroy_stack(&st);
+    rs=NULL;
+    st=NULL;
+    rpn_count(NULL,HALT);
     return;
   }
   if(!token || !token->sym) return;
   switch(token->type)
   {
     case NUMBER:
+    case CONSTANT:
+      rpn_count(token,ACTIVE);
       str_append(&rs,token->sym);
       break;
     case UNAOP:
       if(strcmp(token->sym,"~"))
+      {
+        rpn_count(token,ACTIVE);
         str_append(&rs,token->sym);
+      }
       else
         push(&st,token);
       break;
@@ -74,6 +260,7 @@ static void rpn_parse(const Token* token, status_t status)
     {
       while(get_size(&st) && !check_priority(top(&st),token))
       {
+        rpn_count(top(&st),ACTIVE);
         str_append(&rs,top(&st)->sym);
         pop(&st);
       }
@@ -83,12 +270,14 @@ static void rpn_parse(const Token* token, status_t status)
     case RPAREN:
       while(get_size(&st) && top(&st)->type!=LPAREN)
       {
+        rpn_count(top(&st),ACTIVE);
         str_append(&rs,top(&st)->sym);
         pop(&st);
       }
       pop(&st);
       if(get_size(&st) && top(&st)->type==FUNCTION)
       {
+        rpn_count(top(&st),ACTIVE);
         str_append(&rs,top(&st)->sym);
         pop(&st);
       }
@@ -96,6 +285,7 @@ static void rpn_parse(const Token* token, status_t status)
     case DELIM:
       while(get_size(&st) && top(&st)->type!=LPAREN)
       {
+        rpn_count(top(&st),ACTIVE);
         str_append(&rs,top(&st)->sym);
         pop(&st);
       }
@@ -106,7 +296,7 @@ static void rpn_parse(const Token* token, status_t status)
 
 }
 
-static void tokenize(const char* const arg, token_cb callback)
+static void tokenize(const char* const arg)
 {
   size_t len=strlen(arg);
   if(!len) return;
@@ -114,6 +304,7 @@ static void tokenize(const char* const arg, token_cb callback)
   const Token* token=NULL;
   int prev_priority = 0;
   token_t prev_type=UNDEF;
+  bool met_floatop=false;
   while(i<len)
   {
     if(isdigit(arg[i])) 
@@ -140,7 +331,7 @@ static void tokenize(const char* const arg, token_cb callback)
       prev_type=NUMBER;
       prev_priority=0;
       Token* tmp=create_token(buffer,NUMBER,NONE,0);
-      callback(tmp,ACTIVE);
+      rpn_parse(tmp,ACTIVE);
       destroy_token(tmp);
       continue;
     }
@@ -157,7 +348,7 @@ static void tokenize(const char* const arg, token_cb callback)
       {
         prev_type=token->type;
         prev_priority=token->priority;
-        callback(token,ACTIVE);
+        rpn_parse(token,ACTIVE);
       }
       continue;
     }
@@ -169,9 +360,16 @@ static void tokenize(const char* const arg, token_cb callback)
       i++;
       continue;
     }
+    
+    if(!strcmp(token->sym,"%")&&met_floatop)
+    {
+      met_floatop=false;
+      token=find_token("_%");
+    }
 
     if(token->type==FLOATOP)
     {
+      met_floatop=true;
       token_t cur_type=UNDEF;
       if(!prev_type)
       {
@@ -201,7 +399,7 @@ static void tokenize(const char* const arg, token_cb callback)
         if(!strcmp(token->sym,"-"))
         {
           const Token* uminus = find_token("~");
-          callback(uminus,ACTIVE);
+          rpn_parse(uminus,ACTIVE);
           prev_priority=uminus->priority;
         }
         prev_type=cur_type;
@@ -212,15 +410,42 @@ static void tokenize(const char* const arg, token_cb callback)
     
     prev_priority=token->priority;
     prev_type=token->type;
-    callback(token,ACTIVE);
+    rpn_parse(token,ACTIVE);
     i++;
   }
-  callback(token,HALT);
+  rpn_parse(token,HALT);
 } 
 
 int main(int argc, char** argv)
 {
-  if(argc!=2) return 1;
-  tokenize(argv[1],rpn_parse);
+  if(argc<2)
+  {
+    fprintf(stderr,"Example: %s '1+0.25' -p 3\n\n",argv[0]);
+    fprintf(stderr,"Option [p] is for precision.\n");
+    fprintf(stderr,"You must provide at least 1 argument!\n");
+    return 1;
+  }
+  
+  int opt;
+  while((opt=getopt(argc,argv,":p:"))!=-1)
+  {
+    switch(opt)
+    {
+      case ':':
+        fprintf(stderr,"%c needs an argument!\n",optopt);
+        return 1;
+        break;
+      case 'p':
+        set_format(optarg);
+        break;
+      default:
+        break;
+    }
+  }
+  int i=1;
+  do{
+    printf("\nExpression %d: [ %s ]\n",i++,argv[optind]);
+    tokenize(argv[optind++]);
+  } while(optind<argc);
   return 0;
 }

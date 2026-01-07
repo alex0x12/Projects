@@ -22,8 +22,8 @@ static Token _opset[] =
   
   {",",DELIM,NONE,0},
 
-  {"p",NUMBER,NONE,0},
-  {"e",NUMBER,NONE,0},
+  {"p",CONSTANT,NONE,0},
+  {"e",CONSTANT,NONE,0},
 
   {"(",LPAREN,NONE,0},
   {")",RPAREN,NONE,0},
@@ -37,6 +37,9 @@ static Token _opset[] =
   
   {"%",UNAOP,RIGHT,4},
   {"!",UNAOP,RIGHT,4},
+  
+  // ADDITIONAL ALPHABET
+  {"_%",UNAOP,RIGHT,4},
   {"~",UNAOP,RIGHT,5}
 };
 
@@ -49,7 +52,7 @@ static int _opcmp(const void* a, const void* b)
   return strcmp(op_a->sym,op_b->sym);
 }
 
-Token* create_token(char* sym, token_t type, assoc_t assoc, int priority)
+Token* create_token(const char* sym, token_t type, assoc_t assoc, int priority)
 {
   Token* token = malloc(sizeof(Token));
   if(!token) return NULL;
@@ -97,12 +100,42 @@ Token* find_token_ch(const char ch)
   return find_token(s_ch);
 }
 
+/*
+Token* getops_by_type(token_t type)
+{
+  Token* ops=NULL;
+  size_t i=0;
+  size_t n=0;
+  int* ops_idx = malloc(sizeof(int));
+  while(i<_opset_size)
+  {
+    if(_opset[i].type==type)
+    {
+      ops_idx[n]=i;
+      ops_idx=realloc(ops_idx,2*n*sizeof(int));
+      n++;
+    }  
+    i++;
+  }
+  ops=malloc(n*sizeof(Token));
+  i=0;
+  while(i<n)
+  {
+    ops[i]=_opset[ops_idx[i]];
+  }
+  free(ops_idx);
+  return ops;
+}
+*/
+
 void destroy_token(Token* token)
 {
   if(!token) return;
   if(token->sym)
     free(token->sym);
+  token->sym=NULL;
   free(token);
+  token=NULL;
 }
 
 /* TOKEN */
@@ -115,6 +148,15 @@ _allocate(Stack** ptr, const Token* token ,Stack* next)
   (*ptr)=malloc(sizeof(Stack));
   (*ptr)->next=next;
   (*ptr)->token=create_token(token->sym,token->type,token->assoc,token->priority);
+  return 0;
+}
+
+static int
+_allocate_inplace(Stack** ptr, const char* sym, token_t type, assoc_t assoc, int priority ,Stack* next)
+{
+  (*ptr)=malloc(sizeof(Stack));
+  (*ptr)->next=next;
+  (*ptr)->token=create_token(sym,type,assoc,priority);
   return 0;
 }
 
@@ -134,6 +176,21 @@ push(Stack** head,const Token* token)
 }
 
 int
+push_inplace(Stack** head,const char* sym, token_t type, assoc_t assoc, int priority)
+{
+   Stack* tmp=NULL;
+   int rs=0;
+   if(!head)
+     rs=_allocate_inplace(head,sym,type,assoc,priority,tmp);
+   else
+   {
+     rs=_allocate_inplace(&tmp,sym,type,assoc,priority,(*head));
+     *(head)=tmp;
+   }
+   return rs;
+}
+
+int
 pop(Stack** head)
 {
   if(!(*head)) return -1;
@@ -141,13 +198,14 @@ pop(Stack** head)
   (*head)=(*head)->next;
   destroy_token(tmp->token);
   free(tmp);
+  tmp=NULL;
   return 0;
 }
 
-const Token* top(Stack** head)
+Token* top(Stack** head)
 {
   if(!(*head)) return NULL;
-  const Token* t = (*head)->token;
+  Token* t = (*head)->token;
   return t;
 }
 
@@ -174,7 +232,7 @@ void destroy_stack(Stack** head)
 
 /* RPN */
 
-static void _concat(char** dest, ...)
+void str_construct(char** dest, ...)
 {
   va_list p;
   va_start(p,dest);
@@ -195,7 +253,7 @@ static void _concat(char** dest, ...)
 
 void str_append(char** dest, char* str)
 {
-  _concat(dest,str," ",NULL);
+  str_construct(dest,str," ",NULL);
 }
 
 /* RPN */

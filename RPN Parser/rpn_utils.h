@@ -10,6 +10,7 @@ typedef enum
   UNAOP,
   FLOATOP,
   NUMBER,
+  CONSTANT,
   LPAREN,
   RPAREN
 } token_t;
@@ -31,7 +32,8 @@ typedef struct
 
 Token* find_token(const char*  sym);
 Token* find_token_ch(const char ch);
-Token* create_token(char* sym, token_t type, assoc_t assoc, int priority);
+Token* create_token(const char* sym, token_t type, assoc_t assoc, int priority);
+//Token* getops_by_type(token_t type);
 void destroy_token(Token* token);
 
 /* STACK */
@@ -42,9 +44,10 @@ struct node
   Stack* next;
 };
 
+int          push_inplace(Stack** head, const char* sym, token_t type, assoc_t assoc, int priority);
 int          push(Stack** head, const Token *token);
 int          pop(Stack** head);
-const Token* top(Stack** head);
+Token*       top(Stack** head);
 size_t       get_size(Stack** head);
 void         destroy_stack(Stack** head);
 
@@ -58,9 +61,8 @@ typedef enum
   ACTIVE
 } status_t;
 
-typedef void (*token_cb)(const Token* token, status_t status);
-
 void str_append(char** dest, char* str);
+void str_construct(char** dest, ...);
 
 /* RPN */
 
