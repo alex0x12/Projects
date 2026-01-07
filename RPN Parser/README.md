@@ -10,7 +10,8 @@ As a result, we get a string that's ready to be counted.
 ![work_example](rs.png)
 
 ## TODO
-- Preprocessing 
+- Preprocessing
+- Bitwise operations
 - Tests
 - Comments
 
