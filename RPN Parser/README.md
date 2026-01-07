@@ -15,15 +15,16 @@ As a result, we get a string that's ready to be counted.
 - Tests
 - Comments
 
-## Build options
+## Build script
 ```console
-  CFLAGS_DEBUG="-Werror -Wall -Wextra -DDEBUG -g"
-  CFLAGS_RELEASE="-Werror -Wall -Wextra"
-  [ "$1" == "-release" ] && \
-    CFLAGS=$CFLAGS_RELEASE || \
-    CFLAGS=$CFLAGS_DEBUG
-  for item in $PWD/*.c; do
-    gcc -c $CFLAGS $item
-  done
-  gcc rpn.o rpn_utils.o -lm -o rpn
+#!/bin/bash
+CFLAGS_DEBUG="-Werror -Wall -Wextra -DDEBUG -g"
+CFLAGS_RELEASE="-Werror -Wall -Wextra"
+[ "$1" == "-release" ] && \
+  CFLAGS=$CFLAGS_RELEASE || \
+  CFLAGS=$CFLAGS_DEBUG
+for item in $PWD/*.c; do
+  gcc -c $CFLAGS $item
+done
+gcc rpn.o rpn_utils.o -lm -o rpn
 ```
