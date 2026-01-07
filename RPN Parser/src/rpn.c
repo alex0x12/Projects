@@ -1,3 +1,4 @@
+#include <complex.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -9,7 +10,10 @@
 
 #include "rpn_utils.h"
 
+
 static char format[16] = "%0.3f";
+
+
 static void set_format(const char* arg)
 {
   size_t fs=sizeof(format);
@@ -22,6 +26,7 @@ static void set_format(const char* arg)
   
   free(rs);
 }
+
 
 static double fact(double v)
 {
@@ -435,9 +440,10 @@ int main(int argc, char** argv)
     }
   }
   int i=1;
-  do{
+  while(optind<argc)
+  {
     printf("\nExpression %d: [ %s ]\n",i++,argv[optind]);
     tokenize(argv[optind++]);
-  } while(optind<argc);
+  }
   return 0;
 }
