@@ -1,3 +1,4 @@
+#include <complex.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -433,8 +434,15 @@ int main(int argc, char** argv)
       case ':':
         fprintf(stderr,"%c needs an argument!\n",optopt);
         return 1;
-        break;
       case 'p':
+        size_t i=0;
+        while(isdigit(optarg[i]))
+          i++;
+        if(i<strlen(optarg)||optarg[0]=='0')
+        {
+          fprintf(stderr,"%c - only positive numbers allowed!\n",opt);
+          return 1;
+        }
         set_format(optarg);
         break;
       default:
