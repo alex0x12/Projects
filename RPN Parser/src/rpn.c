@@ -1,28 +1,30 @@
-#include <complex.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <math.h>
 
 #include "rpn_utils.h"
 
 
-static char format[16] = "%0.3f";
+static char FORMAT[16] = "%0.3f";
+static int BRIEF_FLAG = 0;
+
 
 
 static void set_format(const char* arg)
 {
-  size_t fs=sizeof(format);
-  memset(format,0,fs);
+  size_t fs=sizeof(FORMAT);
+  memset(FORMAT,0,fs);
   
   char *rs=NULL; 
   str_construct(&rs,"%0.",arg,"f",NULL);
   size_t len = strnlen(rs,fs-1);
-  strncpy(format,rs,len);
+  strncpy(FORMAT,rs,len);
   
   free(rs);
 }
@@ -41,7 +43,10 @@ static void rpn_count(const Token* token, status_t status)
   char* endptr=NULL;
   if(status==HALT)
   {
-    printf("Res: %s\n",top(&st)->sym);
+    if(!BRIEF_FLAG)
+      printf("Res: %s\n",top(&st)->sym);
+    else
+      printf("%s\n",top(&st)->sym);
     destroy_stack(&st);
     st=NULL;
     return;
@@ -62,11 +67,11 @@ static void rpn_count(const Token* token, status_t status)
     char buffer[64];
     if(!strcmp(sym,"e"))
     {
-      snprintf(buffer,64,format,M_E);
+      snprintf(buffer,64,FORMAT,M_E);
     }
     else if(!strcmp(sym,"p"))
     {
-      snprintf(buffer,64,format,M_PI);
+      snprintf(buffer,64,FORMAT,M_PI);
     }
     top(&st)->sym=strdup(buffer);
     return;
@@ -91,7 +96,7 @@ static void rpn_count(const Token* token, status_t status)
       rs=(val/100.0)*percent;
 
       char buffer[64]; 
-      snprintf(buffer,64,format,rs);
+      snprintf(buffer,64,FORMAT,rs);
       push_inplace(&st,buffer,NUMBER,NONE,0);
       return;
     }
@@ -170,7 +175,7 @@ static void rpn_count(const Token* token, status_t status)
 
   char** t=&top(&st)->sym;
   *t=realloc(*t,64);
-  snprintf(*t,64,format,rs);
+  snprintf(*t,64,FORMAT,rs);
 }
 
 static bool check_priority(const Token* st_top, const Token* token)
@@ -214,7 +219,8 @@ static void rpn_parse(const Token* token, status_t status)
     destroy_stack(&st);
     if(rs)
     {
-      printf("RPN: %s\n",rs);
+      if(!BRIEF_FLAG)
+        printf("RPN: %s\n",rs);
       free(rs);
     }
     rs=NULL;
@@ -406,31 +412,44 @@ static void tokenize(const char* const arg)
   rpn_parse(token,HALT);
 } 
 
+
+
 int main(int argc, char** argv)
 {
   if(argc<2)
   {
-    fprintf(stderr,"Example: %s '1+0.25' -p 3\n\n",argv[0]);
-    fprintf(stderr,"Option [p] is for precision.\n");
-    fprintf(stderr,"You must provide at least 1 argument!\n");
+    fprintf(stderr,"Example: %s -p 5 -b -- '1+2' '2*2' 'log(2,8)'\n\n",argv[0]);
+    fprintf(stderr,"-- is for splitting options and arguments.\n");
+    fprintf(stderr,"-p, --precision {uint} is for precision.\n");
+    fprintf(stderr,"-b, --brief is for brief output\n");
+    fprintf(stderr,"You must provide at least 1 string!\n");
     return 1;
   }
   
   int opt;
-  while((opt=getopt(argc,argv,":p:"))!=-1)
+  const struct option long_opts[]=
+  {
+    {"brief",no_argument,&BRIEF_FLAG,'b'},
+    {"precision",required_argument,NULL,'p'},
+    {NULL,0,NULL,0}
+  };
+  const char* const short_opts="bp:";
+  while((opt=getopt_long_only(argc,argv,short_opts,long_opts,NULL))!=-1)
   {
     switch(opt)
     {
-      case ':':
-        fprintf(stderr,"%c needs an argument!\n",optopt);
+      case '?':
         return 1;
+      case 'b':
+        BRIEF_FLAG=1;
+        break;
       case 'p':
         size_t i=0;
         while(isdigit(optarg[i]))
           i++;
         if(i<strlen(optarg)||optarg[0]=='0')
         {
-          fprintf(stderr,"%c - only positive numbers allowed!\n",opt);
+          fprintf(stderr,"--precision|-p: only positive numbers allowed!\n");
           return 1;
         }
         set_format(optarg);
@@ -439,10 +458,11 @@ int main(int argc, char** argv)
         break;
     }
   }
-  int i=1;
+  size_t i=1;
   while(optind<argc)
   {
-    printf("\nExpression %d: [ %s ]\n",i++,argv[optind]);
+    if(!BRIEF_FLAG)
+      printf("\nExpression %zu: [ %s ]\n",i++,argv[optind]);
     tokenize(argv[optind++]);
   }
   return 0;
