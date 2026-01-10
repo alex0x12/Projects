@@ -10,25 +10,10 @@
 
 #include "rpn_utils.h"
 
-
-static char FORMAT[16] = "%0.3f";
+static const unsigned char PRECISION_MAX=30;
+static unsigned char PRECISION=3;
+static char FORMAT[16] = "%0.*f";
 static int BRIEF_FLAG = 0;
-
-
-
-static void set_format(const char* arg)
-{
-  size_t fs=sizeof(FORMAT);
-  memset(FORMAT,0,fs);
-  
-  char *rs=NULL; 
-  str_construct(&rs,"%0.",arg,"f",NULL);
-  size_t len = strnlen(rs,fs-1);
-  strncpy(FORMAT,rs,len);
-  
-  free(rs);
-}
-
 
 static double fact(double v)
 {
@@ -67,11 +52,11 @@ static void rpn_count(const Token* token, status_t status)
     char buffer[64];
     if(!strcmp(sym,"e"))
     {
-      snprintf(buffer,64,FORMAT,M_E);
+      snprintf(buffer,64,FORMAT,PRECISION,M_E);
     }
     else if(!strcmp(sym,"p"))
     {
-      snprintf(buffer,64,FORMAT,M_PI);
+      snprintf(buffer,64,FORMAT,PRECISION,M_PI);
     }
     top(&st)->sym=strdup(buffer);
     return;
@@ -96,7 +81,7 @@ static void rpn_count(const Token* token, status_t status)
       rs=(val/100.0)*percent;
 
       char buffer[64]; 
-      snprintf(buffer,64,FORMAT,rs);
+      snprintf(buffer,64,FORMAT,PRECISION,rs);
       push_inplace(&st,buffer,NUMBER,NONE,0);
       return;
     }
@@ -175,7 +160,7 @@ static void rpn_count(const Token* token, status_t status)
 
   char** t=&top(&st)->sym;
   *t=realloc(*t,64);
-  snprintf(*t,64,FORMAT,rs);
+  snprintf(*t,64,FORMAT,PRECISION,rs);
 }
 
 static bool check_priority(const Token* st_top, const Token* token)
@@ -447,12 +432,13 @@ int main(int argc, char** argv)
         size_t i=0;
         while(isdigit(optarg[i]))
           i++;
-        if(i<strlen(optarg)||optarg[0]=='0')
+        if(i<strlen(optarg))
         {
-          fprintf(stderr,"--precision|-p: only positive numbers allowed!\n");
+          fprintf(stderr,"--precision|-p: only non-negative numbers allowed!\n");
           return 1;
         }
-        set_format(optarg);
+        unsigned char tmp=atoi(optarg);
+        PRECISION=tmp>PRECISION_MAX?PRECISION_MAX:tmp;
         break;
       default:
         break;
